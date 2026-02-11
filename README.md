@@ -47,7 +47,8 @@ This repository is a modified version from https://github.com/Sirajuddin135/E-Co
   - Select Maven > Existing Maven Projects and click Next
   - Browse to the project directory and click Finish
 3. Update the values in application.properties with your MySQL database connection details.
-4. Run the app: Right-click the project in the Package Explorer and click Run As > Spring Boot App.
+4. Run the docker compose file by `docker-compose up -d`. Make sure the container port on the docker-compose is not reserved in your computer.
+5. Run the app: Right-click the project in the Package Explorer and click Run As > Spring Boot App.
 
 # API documentation
 - API documentation is available via Swagger UI at http://localhost:8080/swagger-ui/index.html
