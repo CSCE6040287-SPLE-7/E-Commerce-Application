@@ -107,7 +107,7 @@ public class DataSeeder implements CommandLineRunner {
 		log.info("Seeded {} addresses", addresses.size());
 
 		// 4. Seed Users with Roles and Addresses
-		List<User> users = seedUsers(10, roles, addresses);
+		List<User> users = seedUsers(15, roles, addresses);
 		log.info("Seeded {} users", users.size());
 
 		// 5. Seed Carts for Users
@@ -145,7 +145,9 @@ public class DataSeeder implements CommandLineRunner {
 		String[] categoryNames = {
 			"Electronics", "Clothing", "Books", "Home & Kitchen",
 			"Sports & Outdoors", "Toys & Games", "Beauty & Personal Care",
-			"Automotive", "Health & Wellness", "Jewelry"
+			"Automotive", "Health & Wellness", "Jewelry",
+			"Pet Supplies", "Office Products", "Garden & Outdoor",
+			"Musical Instruments", "Arts & Crafts"
 		};
 
 		for (String name : categoryNames) {
