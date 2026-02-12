@@ -50,6 +50,11 @@ This repository is a modified version from https://github.com/Sirajuddin135/E-Co
 4. Run the docker compose file by `docker-compose up -d`. Make sure the container port on the docker-compose is not reserved in your computer.
 5. Run the app: Right-click the project in the Package Explorer and click Run As > Spring Boot App.
 
+# Order Flow
+1. Make sure you have items on your cart
+2. hit `/api/public/users/bankTransfer` to look the bank account number available to transfer.
+3. hit  `/api/public/users/user%40ecommerce.com/carts/12/payments/bankTransfer/order?bankName=bri&accountNumber=8241263128142` to checkout or order your cart. Don't forget to choose the bank account number that already provided before.
+
 # API documentation
 - API documentation is available via Swagger UI at http://localhost:8080/swagger-ui/index.html
 

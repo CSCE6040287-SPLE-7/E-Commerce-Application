@@ -1,6 +1,7 @@
 package com.app.controllers;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,19 +19,41 @@ import com.app.payloads.OrderDTO;
 import com.app.payloads.OrderResponse;
 import com.app.services.OrderService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api")
 @SecurityRequirement(name = "E-Commerce Application")
+@Tag(name = "Order Management", description = "APIs for managing orders and payments")
 public class OrderController {
 	
 	@Autowired
 	public OrderService orderService;
 	
-	@PostMapping("/public/users/{email}/carts/{cartId}/payments/{paymentMethod}/order")
-	public ResponseEntity<OrderDTO> orderProducts(@PathVariable String email, @PathVariable Long cartId, @PathVariable String paymentMethod) {
-		OrderDTO order = orderService.placeOrder(email, cartId, paymentMethod);
+	@Operation(
+		summary = "Get Bank Transfer Accounts",
+		description = "Retrieve list of all supported banks and their account numbers for bank transfer payments"
+	)
+	@GetMapping("/public/users/bankTransfer")
+	public ResponseEntity<Map<String, String>> getBankAccounts() {
+		Map<String, String> bankAccounts = orderService.getBankAccounts();
+		return new ResponseEntity<>(bankAccounts, HttpStatus.OK);
+	}
+	
+	@Operation(
+		summary = "Place Order with Bank Transfer",
+		description = "Create a new order using bank transfer payment method. Requires valid bank name and account number."
+	)
+	@PostMapping("/public/users/{email}/carts/{cartId}/payments/bankTransfer/order")
+	public ResponseEntity<OrderDTO> orderProducts(
+			@Parameter(description = "User email address") @PathVariable String email, 
+			@Parameter(description = "Cart ID") @PathVariable Long cartId, 
+			@Parameter(description = "Bank name (e.g., bca, bri, mandiri, bni, jago)", required = true) @RequestParam String bankName,
+			@Parameter(description = "Bank account number", required = true) @RequestParam String accountNumber) {
+		OrderDTO order = orderService.placeOrder(email, cartId, "bankTransfer", bankName, accountNumber);
 		
 		return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
 	}

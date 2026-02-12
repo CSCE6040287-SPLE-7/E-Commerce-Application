@@ -1,13 +1,16 @@
 package com.app.services;
 
 import java.util.List;
+import java.util.Map;
 
 import com.app.payloads.OrderDTO;
 import com.app.payloads.OrderResponse;
 
 public interface OrderService {
 	
-	OrderDTO placeOrder(String email, Long cartId, String paymentMethod);
+	Map<String, String> getBankAccounts();
+	
+	OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber);
 	
 	OrderDTO getOrder(String email, Long orderId);
 	

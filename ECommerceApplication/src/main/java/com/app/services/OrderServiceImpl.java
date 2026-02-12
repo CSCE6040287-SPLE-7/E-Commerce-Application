@@ -2,7 +2,9 @@ package com.app.services;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -37,6 +39,15 @@ import jakarta.transaction.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService {
 
+	// HashMap untuk menyimpan daftar bank dan nomor rekening
+	private final Map<String, String> bankAccounts = new HashMap<>() {{
+		put("bca", "079123455123");
+		put("jago", "123907412812");
+		put("bri", "8241263128142");
+		put("bni", "9123974123142");
+		put("mandiri", "1123876423142");
+	}};
+
 	@Autowired
 	public UserRepo userRepo;
 
@@ -64,13 +75,41 @@ public class OrderServiceImpl implements OrderService {
 	@Autowired
 	public ModelMapper modelMapper;
 
+	public Map<String, String> getBankAccounts() {
+		return new HashMap<>(bankAccounts);
+	}
+
 	@Override
-	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod) {
+	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber) {
 
 		Cart cart = cartRepo.findCartByEmailAndCartId(email, cartId);
 
 		if (cart == null) {
 			throw new ResourceNotFoundException("Cart", "cartId", cartId);
+		}
+
+		// Validasi bahwa cart tidak kosong
+		List<CartItem> cartItems = cart.getCartItems();
+		if (cartItems == null || cartItems.size() == 0) {
+			throw new APIException("Cart is empty");
+		}
+
+		// Validasi nama bank dan nomor rekening
+		if (bankName == null || bankName.trim().isEmpty()) {
+			throw new APIException("Bank name is required");
+		}
+		if (accountNumber == null || accountNumber.trim().isEmpty()) {
+			throw new APIException("Account number is required");
+		}
+
+		String normalizedBankName = bankName.toLowerCase().trim();
+		if (!bankAccounts.containsKey(normalizedBankName)) {
+			throw new APIException("Bank " + bankName + " is not supported. Supported banks: " + bankAccounts.keySet());
+		}
+
+		String expectedAccountNumber = bankAccounts.get(normalizedBankName);
+		if (!expectedAccountNumber.equals(accountNumber.trim())) {
+			throw new APIException("Invalid account number for bank " + bankName);
 		}
 
 		Order order = new Order();
@@ -84,18 +123,14 @@ public class OrderServiceImpl implements OrderService {
 		Payment payment = new Payment();
 		payment.setOrder(order);
 		payment.setPaymentMethod(paymentMethod);
+		payment.setBankName(normalizedBankName);
+		payment.setAccountNumber(accountNumber);
 
 		payment = paymentRepo.save(payment);
 
 		order.setPayment(payment);
 
 		Order savedOrder = orderRepo.save(order);
-
-		List<CartItem> cartItems = cart.getCartItems();
-
-		if (cartItems.size() == 0) {
-			throw new APIException("Cart is empty");
-		}
 
 		List<OrderItem> orderItems = new ArrayList<>();
 
