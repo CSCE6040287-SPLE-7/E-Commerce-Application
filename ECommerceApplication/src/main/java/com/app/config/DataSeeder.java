@@ -1,43 +1,18 @@
 package com.app.config;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
+import com.app.entites.*;
+import com.app.repositories.*;
+import com.github.javafaker.Faker;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.app.entites.Address;
-import com.app.entites.Cart;
-import com.app.entites.CartItem;
-import com.app.entites.Category;
-import com.app.entites.Order;
-import com.app.entites.OrderItem;
-import com.app.entites.Payment;
-import com.app.entites.Product;
-import com.app.entites.Role;
-import com.app.entites.User;
-import com.app.repositories.AddressRepo;
-import com.app.repositories.CartItemRepo;
-import com.app.repositories.CartRepo;
-import com.app.repositories.CategoryRepo;
-import com.app.repositories.OrderItemRepo;
-import com.app.repositories.OrderRepo;
-import com.app.repositories.PaymentRepo;
-import com.app.repositories.ProductRepo;
-import com.app.repositories.RoleRepo;
-import com.app.repositories.UserRepo;
-import com.github.javafaker.Faker;
-
-import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -135,7 +110,7 @@ public class DataSeeder implements CommandLineRunner {
 		log.info("Seeded {} order items", orderItems.size());
 
 		log.info("Database seeding completed successfully!");
-		
+
 		// Log sample credentials
 		logSampleCredentials();
 	}
@@ -182,7 +157,7 @@ public class DataSeeder implements CommandLineRunner {
 		// Create admin user with known credentials
 		User admin = new User();
 		admin.setFirstName("Admin");
-		admin.setLastName("Administrator"); 
+		admin.setLastName("Administrator");
 		admin.setEmail("admin@ecommerce.com");
 		admin.setMobileNumber("1234567890");
 		admin.setPassword(passwordEncoder.encode("Admin@123")); // Raw password: Admin@123
@@ -212,20 +187,20 @@ public class DataSeeder implements CommandLineRunner {
 		// Create random users
 		for (int i = 2; i < count; i++) {
 			User user = new User();
-			
+
 			// Generate firstName with proper validation (5-20 chars, letters only)
 			String firstName = generateValidName(5, 20);
 			String lastName = generateValidName(5, 20);
-			
+
 			user.setFirstName(firstName);
 			user.setLastName(lastName);
 			user.setEmail(faker.internet().emailAddress());
 			user.setMobileNumber(faker.number().digits(10));
-			
+
 			// Generate random password and encode it
 			String rawPassword = "Pass@" + faker.number().numberBetween(1000, 9999);
 			user.setPassword(passwordEncoder.encode(rawPassword));
-			
+
 			// Assign user role
 			Set<Role> userRoles = new HashSet<>();
 			userRoles.add(userRole);
@@ -253,17 +228,17 @@ public class DataSeeder implements CommandLineRunner {
 	 */
 	private String generateValidName(int minLength, int maxLength) {
 		String name = faker.name().firstName().replaceAll("[^a-zA-Z]", "");
-		
+
 		// If too short, append letters until minimum length
 		while (name.length() < minLength) {
 			name += faker.lorem().characters(1, true, false).replaceAll("[^a-zA-Z]", "a");
 		}
-		
+
 		// If too long, truncate to max length
 		if (name.length() > maxLength) {
 			name = name.substring(0, maxLength);
 		}
-		
+
 		return name;
 	}
 
@@ -289,10 +264,10 @@ public class DataSeeder implements CommandLineRunner {
 			product.setDescription(faker.lorem().sentence(10));
 			product.setImage("product_" + (i + 1) + ".jpg");
 			product.setQuantity(faker.number().numberBetween(10, 500));
-			
+
 			double price = Double.parseDouble(faker.commerce().price().replace(",", ""));
 			product.setPrice(price);
-			
+
 			double discount = random.nextDouble() * 30; // 0-30% discount
 			product.setDiscount(discount);
 			product.setSpecialPrice(price * (1 - discount / 100));
@@ -317,14 +292,14 @@ public class DataSeeder implements CommandLineRunner {
 
 				for (int i = 0; i < itemCount; i++) {
 					Product product = products.get(random.nextInt(products.size()));
-					
+
 					CartItem cartItem = new CartItem();
 					cartItem.setCart(cart);
 					cartItem.setProduct(product);
 					cartItem.setQuantity(random.nextInt(5) + 1);
 					cartItem.setDiscount(product.getDiscount());
 					cartItem.setProductPrice(product.getSpecialPrice());
-					
+
 					totalPrice += cartItem.getProductPrice() * cartItem.getQuantity();
 					cartItems.add(cartItem);
 				}
@@ -341,7 +316,7 @@ public class DataSeeder implements CommandLineRunner {
 	private List<Payment> seedPayments(int count) {
 		List<Payment> payments = new ArrayList<>();
 		String[] paymentMethods = {
-			"Credit Card", "Debit Card", "PayPal", "Bank Transfer", 
+			"Credit Card", "Debit Card", "PayPal", "Bank Transfer",
 			"Cash on Delivery", "UPI Payment", "E-Wallet"
 		};
 
@@ -362,11 +337,11 @@ public class DataSeeder implements CommandLineRunner {
 
 		for (int i = 0; i < count; i++) {
 			Order order = new Order();
-			
+
 			// Assign random user email
 			User user = users.get(random.nextInt(users.size()));
 			order.setEmail(user.getEmail());
-			
+
 			// Random order date within last 90 days
 			order.setOrderDate(
 				faker.date()
@@ -375,11 +350,11 @@ public class DataSeeder implements CommandLineRunner {
 					.atZone(ZoneId.systemDefault())
 					.toLocalDate()
 			);
-			
+
 			order.setPayment(payments.get(i));
 			order.setOrderStatus(orderStatuses[random.nextInt(orderStatuses.length)]);
 			order.setTotalAmount(0.0); // Will be updated when adding order items
-			
+
 			orders.add(order);
 		}
 
@@ -395,14 +370,14 @@ public class DataSeeder implements CommandLineRunner {
 
 			for (int i = 0; i < itemCount; i++) {
 				Product product = products.get(random.nextInt(products.size()));
-				
+
 				OrderItem orderItem = new OrderItem();
 				orderItem.setOrder(order);
 				orderItem.setProduct(product);
 				orderItem.setQuantity(random.nextInt(5) + 1);
 				orderItem.setDiscount(product.getDiscount());
 				orderItem.setOrderedProductPrice(product.getSpecialPrice());
-				
+
 				totalAmount += orderItem.getOrderedProductPrice() * orderItem.getQuantity();
 				orderItems.add(orderItem);
 			}
