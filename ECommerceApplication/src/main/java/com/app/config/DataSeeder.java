@@ -49,6 +49,9 @@ public class DataSeeder implements CommandLineRunner {
 	private OrderItemRepo orderItemRepo;
 
 	@Autowired
+	private StoreDiscountRepo storeDiscountRepo;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	private final Faker faker = new Faker();
@@ -108,6 +111,9 @@ public class DataSeeder implements CommandLineRunner {
 		// 10. Seed Order Items
 		List<OrderItem> orderItems = seedOrderItems(orders, products);
 		log.info("Seeded {} order items", orderItems.size());
+
+		List<StoreDiscount> storeDiscounts = seedStoreDiscounts(10);
+		log.info("Seeded {} store discounts", storeDiscounts.size());
 
 		log.info("Database seeding completed successfully!");
 
@@ -388,6 +394,37 @@ public class DataSeeder implements CommandLineRunner {
 		}
 
 		return orderItemRepo.saveAll(orderItems);
+	}
+
+	private List<StoreDiscount> seedStoreDiscounts(int count) {
+		List<StoreDiscount> storeDiscounts = new ArrayList<>();
+
+		for (int i = 0; i < count; i++) {
+			StoreDiscount storeDiscount = new StoreDiscount();
+			storeDiscount.setName("Promo " + faker.pokemon().name());
+			storeDiscount.setIsActive(true);
+			storeDiscount.setDiscountPercentage(random.nextDouble() * 100); // 0-100% discount
+
+			// Random start date within last 30 days
+			Date startDate = faker.date().past(30, TimeUnit.DAYS);
+			storeDiscount.setStartDate(
+				startDate.toInstant()
+					.atZone(ZoneId.systemDefault())
+					.toLocalDateTime()
+			);
+
+			// Random end date within next 30 days
+			Date endDate = faker.date().future(30, TimeUnit.DAYS);
+			storeDiscount.setEndDate(
+				endDate.toInstant()
+					.atZone(ZoneId.systemDefault())
+					.toLocalDateTime()
+			);
+
+			storeDiscounts.add(storeDiscount);
+		}
+
+		return storeDiscountRepo.saveAll(storeDiscounts);
 	}
 
 	private void logSampleCredentials() {

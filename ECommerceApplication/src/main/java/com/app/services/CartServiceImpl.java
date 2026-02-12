@@ -1,24 +1,28 @@
 package com.app.services;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.app.entites.Cart;
 import com.app.entites.CartItem;
 import com.app.entites.Product;
+import com.app.entites.StoreDiscount;
 import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
+import com.app.helper.DiscountHelper;
 import com.app.payloads.CartDTO;
 import com.app.payloads.ProductDTO;
 import com.app.repositories.CartItemRepo;
 import com.app.repositories.CartRepo;
 import com.app.repositories.ProductRepo;
-
 import jakarta.transaction.Transactional;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.app.helper.DiscountHelper.EffectiveDiscountResult;
+import static com.app.helper.DiscountHelper.calculateEffectiveDiscountAndSpecialPrice;
+
 
 @Transactional
 @Service
@@ -35,6 +39,9 @@ public class CartServiceImpl implements CartService {
 
 	@Autowired
 	private ModelMapper modelMapper;
+
+	@Autowired
+	private StoreDiscountService storeDiscountService;
 
 	@Override
 	public CartDTO addProductToCart(Long cartId, Long productId, Integer quantity) {
@@ -62,17 +69,22 @@ public class CartServiceImpl implements CartService {
 
 		CartItem newCartItem = new CartItem();
 
+		List<StoreDiscount> activeStoreDiscount = storeDiscountService.getCurrentlyActiveStoreDiscounts();
+		StoreDiscount selectedStoreDiscount = activeStoreDiscount.isEmpty() ? null : activeStoreDiscount.get(0);
+
+		EffectiveDiscountResult discountResult = calculateEffectiveDiscountAndSpecialPrice(product, selectedStoreDiscount);
+
 		newCartItem.setProduct(product);
 		newCartItem.setCart(cart);
 		newCartItem.setQuantity(quantity);
-		newCartItem.setDiscount(product.getDiscount());
-		newCartItem.setProductPrice(product.getSpecialPrice());
+		newCartItem.setDiscount(discountResult.effectiveDiscount());
+		newCartItem.setProductPrice(discountResult.specialPrice());
 
 		cartItemRepo.save(newCartItem);
 
 		product.setQuantity(product.getQuantity() - quantity);
 
-		cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
+		cart.setTotalPrice(cart.getTotalPrice() + (discountResult.specialPrice() * quantity));
 
 		CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
 
@@ -89,7 +101,7 @@ public class CartServiceImpl implements CartService {
 	public List<CartDTO> getAllCarts() {
 		List<Cart> carts = cartRepo.findAll();
 
-		if (carts.size() == 0) {
+		if (carts.isEmpty()) {
 			throw new APIException("No cart exists");
 		}
 
@@ -142,7 +154,12 @@ public class CartServiceImpl implements CartService {
 
 		double cartPrice = cart.getTotalPrice() - (cartItem.getProductPrice() * cartItem.getQuantity());
 
-		cartItem.setProductPrice(product.getSpecialPrice());
+		List<StoreDiscount> activeStoreDiscount = storeDiscountService.getCurrentlyActiveStoreDiscounts();
+		StoreDiscount selectedStoreDiscount = activeStoreDiscount.isEmpty() ? null : activeStoreDiscount.get(0);
+
+		DiscountHelper.EffectiveDiscountResult discountResult = calculateEffectiveDiscountAndSpecialPrice(product, selectedStoreDiscount);
+
+		cartItem.setProductPrice(discountResult.specialPrice());
 
 		cart.setTotalPrice(cartPrice + (cartItem.getProductPrice() * cartItem.getQuantity()));
 
@@ -176,9 +193,14 @@ public class CartServiceImpl implements CartService {
 
 		product.setQuantity(product.getQuantity() + cartItem.getQuantity() - quantity);
 
-		cartItem.setProductPrice(product.getSpecialPrice());
+		List<StoreDiscount> activeStoreDiscount = storeDiscountService.getCurrentlyActiveStoreDiscounts();
+		StoreDiscount selectedStoreDiscount = activeStoreDiscount.isEmpty() ? null : activeStoreDiscount.get(0);
+
+		DiscountHelper.EffectiveDiscountResult discountResult = calculateEffectiveDiscountAndSpecialPrice(product, selectedStoreDiscount);
+
+		cartItem.setProductPrice(discountResult.specialPrice());
 		cartItem.setQuantity(quantity);
-		cartItem.setDiscount(product.getDiscount());
+		cartItem.setDiscount(discountResult.effectiveDiscount());
 
 		cart.setTotalPrice(cartPrice + (cartItem.getProductPrice() * quantity));
 

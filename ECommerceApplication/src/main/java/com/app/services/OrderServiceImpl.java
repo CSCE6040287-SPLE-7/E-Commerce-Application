@@ -93,7 +93,7 @@ public class OrderServiceImpl implements OrderService {
 
 		List<CartItem> cartItems = cart.getCartItems();
 
-		if (cartItems.size() == 0) {
+		if (cartItems.isEmpty()) {
 			throw new APIException("Cart is empty");
 		}
 
