@@ -48,6 +48,15 @@ public class OrderServiceImpl implements OrderService {
 		put("mandiri", "1123876423142");
 	}};
 
+	// HashMap untuk menyimpan kode promo dan persentase diskon (1-100)
+	private final Map<String, Integer> promoCodes = new HashMap<>() {{
+		put("DISKON10", 10);
+		put("HEMAT20", 20);
+		put("PROMO15", 15);
+		put("SAVE25", 25);
+		put("SPECIAL30", 30);
+	}};
+
 	@Autowired
 	public UserRepo userRepo;
 
@@ -79,8 +88,12 @@ public class OrderServiceImpl implements OrderService {
 		return new HashMap<>(bankAccounts);
 	}
 
+	public Map<String, Integer> getPromoCodes() {
+		return new HashMap<>(promoCodes);
+	}
+
 	@Override
-	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber) {
+	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber, String promocode) {
 
 		Cart cart = cartRepo.findCartByEmailAndCartId(email, cartId);
 
@@ -112,12 +125,26 @@ public class OrderServiceImpl implements OrderService {
 			throw new APIException("Invalid account number for bank " + bankName);
 		}
 
+		// Validasi dan hitung diskon jika ada kode promo
+		Double totalAmount = cart.getTotalPrice();
+		Integer discountPercentage = 0;
+		
+		if (promocode != null && !promocode.trim().isEmpty()) {
+			String normalizedPromoCode = promocode.trim().toUpperCase();
+			if (!promoCodes.containsKey(normalizedPromoCode)) {
+				throw new APIException("Invalid promo code: " + promocode + ".");
+			}
+			discountPercentage = promoCodes.get(normalizedPromoCode);
+			// Terapkan diskon
+			totalAmount = totalAmount - (totalAmount * discountPercentage / 100.0);
+		}
+
 		Order order = new Order();
 
 		order.setEmail(email);
 		order.setOrderDate(LocalDate.now());
 
-		order.setTotalAmount(cart.getTotalPrice());
+		order.setTotalAmount(totalAmount);
 		order.setOrderStatus("Order Accepted !");
 
 		Payment payment = new Payment();
@@ -125,6 +152,9 @@ public class OrderServiceImpl implements OrderService {
 		payment.setPaymentMethod(paymentMethod);
 		payment.setBankName(normalizedBankName);
 		payment.setAccountNumber(accountNumber);
+		if (promocode != null && !promocode.trim().isEmpty()) {
+			payment.setPromocode(promocode.trim().toUpperCase());
+		}
 
 		payment = paymentRepo.save(payment);
 

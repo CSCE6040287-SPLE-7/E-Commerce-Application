@@ -12,5 +12,6 @@ public class PaymentDTO {
 	private String paymentMethod;
 	private String bankName;
 	private String accountNumber;
+	private String promocode;
 
 }

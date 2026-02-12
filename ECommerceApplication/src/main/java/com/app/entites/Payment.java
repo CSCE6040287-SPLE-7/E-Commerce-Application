@@ -35,4 +35,6 @@ public class Payment {
 
 	private String accountNumber;
 
+	private String promocode;
+
 }

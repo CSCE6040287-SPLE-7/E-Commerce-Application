@@ -10,7 +10,9 @@ public interface OrderService {
 	
 	Map<String, String> getBankAccounts();
 	
-	OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber);
+	Map<String, Integer> getPromoCodes();
+	
+	OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber, String promocode);
 	
 	OrderDTO getOrder(String email, Long orderId);
 	

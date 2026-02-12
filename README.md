@@ -53,7 +53,12 @@ This repository is a modified version from https://github.com/Sirajuddin135/E-Co
 # Order Flow
 1. Make sure you have items on your cart
 2. hit `/api/public/users/bankTransfer` to look the bank account number available to transfer.
-3. hit  `/api/public/users/user%40ecommerce.com/carts/12/payments/bankTransfer/order?bankName=bri&accountNumber=8241263128142` to checkout or order your cart. Don't forget to choose the bank account number that already provided before.
+3. hit  `/api/public/users/{email}/carts/{carts_id}/payments/bankTransfer/order` to checkout or order your cart. Don't forget to choose the bank account number that already provided before.
+
+# Order Flow with Promocode
+1. Make sure you have items on your cart
+2. hit `/api/public/users/bankTransfer` to look the bank account number available to transfer.
+3. hit  `/api/public/users/{email}/carts/{carts_id}/payments/bankTransfer/order` to checkout or order your cart. Don't forget to choose the bank account number that already provided before. Insert the promocode, if you want to check what are the availables promocode in the system you can hit `/api/admin/promoCodes` (only admin can hit this API)
 
 # API documentation
 - API documentation is available via Swagger UI at http://localhost:8080/swagger-ui/index.html

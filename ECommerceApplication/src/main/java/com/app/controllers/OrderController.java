@@ -44,6 +44,16 @@ public class OrderController {
 	}
 	
 	@Operation(
+		summary = "Get Promo Codes",
+		description = "Retrieve list of all available promo codes and their discount percentages"
+	)
+	@GetMapping("/admin/promoCodes")
+	public ResponseEntity<Map<String, Integer>> getPromoCodes() {
+		Map<String, Integer> promoCodes = orderService.getPromoCodes();
+		return new ResponseEntity<>(promoCodes, HttpStatus.OK);
+	}
+	
+	@Operation(
 		summary = "Place Order with Bank Transfer",
 		description = "Create a new order using bank transfer payment method. Requires valid bank name and account number."
 	)
@@ -52,8 +62,9 @@ public class OrderController {
 			@Parameter(description = "User email address") @PathVariable String email, 
 			@Parameter(description = "Cart ID") @PathVariable Long cartId, 
 			@Parameter(description = "Bank name (e.g., bca, bri, mandiri, bni, jago)", required = true) @RequestParam String bankName,
-			@Parameter(description = "Bank account number", required = true) @RequestParam String accountNumber) {
-		OrderDTO order = orderService.placeOrder(email, cartId, "bankTransfer", bankName, accountNumber);
+			@Parameter(description = "Bank account number", required = true) @RequestParam String accountNumber,
+			@Parameter(description = "Promo code for discount (optional)") @RequestParam(required = false) String promocode) {
+		OrderDTO order = orderService.placeOrder(email, cartId, "bankTransfer", bankName, accountNumber, promocode);
 		
 		return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
 	}
