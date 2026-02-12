@@ -125,18 +125,30 @@ public class OrderServiceImpl implements OrderService {
 			throw new APIException("Invalid account number for bank " + bankName);
 		}
 
-		// Validasi dan hitung diskon jika ada kode promo
-		Double totalAmount = cart.getTotalPrice();
+		// Hitung total amount berdasarkan ada/tidaknya promocode
+		Double totalAmount;
 		Integer discountPercentage = 0;
 		
 		if (promocode != null && !promocode.trim().isEmpty()) {
+			// Jika ada promocode: hitung dari harga asli produk
 			String normalizedPromoCode = promocode.trim().toUpperCase();
 			if (!promoCodes.containsKey(normalizedPromoCode)) {
 				throw new APIException("Invalid promo code: " + promocode + ".");
 			}
 			discountPercentage = promoCodes.get(normalizedPromoCode);
-			// Terapkan diskon
+			
+			// Hitung total dari harga asli (bukan harga diskon)
+			totalAmount = 0.0;
+			for (CartItem item : cartItems) {
+				double originalPrice = item.getProduct().getPrice(); // Harga asli
+				totalAmount += originalPrice * item.getQuantity();
+			}
+			
+			// Terapkan diskon promo ke total harga asli
 			totalAmount = totalAmount - (totalAmount * discountPercentage / 100.0);
+		} else {
+			// Jika tidak ada promocode: gunakan harga diskon produk dari cart
+			totalAmount = cart.getTotalPrice();
 		}
 
 		Order order = new Order();
