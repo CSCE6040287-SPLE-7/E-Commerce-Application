@@ -199,7 +199,7 @@ public class CartServiceImpl implements CartService {
 	public String deleteProductFromCart(Long cartId, Long productId) {
 		Cart cart = cartRepo.findById(cartId)
 				.orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
-
+		
 		CartItem cartItem = cartItemRepo.findCartItemByProductIdAndCartId(cartId, productId);
 
 		if (cartItem == null) {

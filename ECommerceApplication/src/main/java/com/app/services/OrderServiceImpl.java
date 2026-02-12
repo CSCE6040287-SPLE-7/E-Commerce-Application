@@ -27,6 +27,7 @@ import com.app.exceptions.ResourceNotFoundException;
 import com.app.payloads.OrderDTO;
 import com.app.payloads.OrderItemDTO;
 import com.app.payloads.OrderResponse;
+import com.app.repositories.AddressRepo;
 import com.app.repositories.CartItemRepo;
 import com.app.repositories.CartRepo;
 import com.app.repositories.OrderItemRepo;
@@ -50,6 +51,9 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	public UserRepo userRepo;
+
+	@Autowired
+	public AddressRepo addressRepo;
 
 	@Autowired
 	public CartRepo cartRepo;
@@ -83,12 +87,11 @@ public class OrderServiceImpl implements OrderService {
 		if (cart == null) {
 			throw new ResourceNotFoundException("Cart", "cartId", cartId);
 		}
-		
 		Double totalAmount;
 		Integer discountPercentage = 0;
 
 		boolean isMembershipApplied = membershipCode != null && !membershipCode.trim().isEmpty();
-		
+
 		if (isMembershipApplied) {
 
 			String normalized = membershipCode.trim().toUpperCase();
@@ -120,13 +123,24 @@ public class OrderServiceImpl implements OrderService {
 		order.setTotalAmount(totalAmount);
 		order.setOrderStatus("Order Accepted !");
 
-		Address address = new Address();
-		address.setCountry(country);
-		address.setState(state);
-		address.setCity(city);
-		address.setPincode(pincode);
-		address.setStreet(street);
-		address.setBuildingName(buildingName);
+		
+		List<Address> addresses = addressRepo.findAllByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(
+			country, state, city, pincode, street, buildingName
+		);
+		
+		Address address;
+		if (addresses.isEmpty()) {
+			address = new Address();
+			address.setCountry(country);
+			address.setState(state);
+			address.setCity(city);
+			address.setPincode(pincode);
+			address.setStreet(street);
+			address.setBuildingName(buildingName);
+			address = addressRepo.save(address);
+		} else {
+			address = addresses.get(0); 
+		}
 
 		Payment payment = new Payment();
 		payment.setOrder(order);
@@ -134,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
 		payment.setShippingAddress(address);
 
 		payment = paymentRepo.save(payment);
-
+		
 		order.setPayment(payment);
 
 		Order savedOrder = orderRepo.save(order);
