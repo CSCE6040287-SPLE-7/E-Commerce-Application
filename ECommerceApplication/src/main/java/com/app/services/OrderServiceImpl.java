@@ -2,7 +2,9 @@ package com.app.services;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.app.entites.Address;
 import com.app.entites.Cart;
 import com.app.entites.CartItem;
 import com.app.entites.Order;
@@ -36,6 +39,14 @@ import jakarta.transaction.Transactional;
 @Transactional
 @Service
 public class OrderServiceImpl implements OrderService {
+
+	private final Map<String, Integer> membershipCodes = new HashMap<>() {{
+		put("BRONZE10", 10);
+		put("SILVER15", 15);
+		put("GOLD20", 20);
+		put("PLATINUM25", 25);
+		put("VIP30", 30);
+	}};
 
 	@Autowired
 	public UserRepo userRepo;
@@ -65,12 +76,40 @@ public class OrderServiceImpl implements OrderService {
 	public ModelMapper modelMapper;
 
 	@Override
-	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod) {
+	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String country, String state, String city, String pincode, String street, String buildingName, String membershipCode) {
 
 		Cart cart = cartRepo.findCartByEmailAndCartId(email, cartId);
-
+		
 		if (cart == null) {
 			throw new ResourceNotFoundException("Cart", "cartId", cartId);
+		}
+		
+		Double totalAmount;
+		Integer discountPercentage = 0;
+
+		boolean isMembershipApplied = membershipCode != null && !membershipCode.trim().isEmpty();
+		
+		if (isMembershipApplied) {
+
+			String normalized = membershipCode.trim().toUpperCase();
+
+			if (!membershipCodes.containsKey(normalized)) {
+				throw new APIException("Invalid membership code");
+			}
+
+			discountPercentage = membershipCodes.get(normalized);
+
+			totalAmount = 0.0;
+
+			for (CartItem item : cart.getCartItems()) {
+				double originalPrice = item.getProduct().getPrice();
+				totalAmount += originalPrice * item.getQuantity();
+			}
+
+			totalAmount -= totalAmount * discountPercentage / 100.0;
+
+		} else {
+			totalAmount = cart.getTotalPrice();
 		}
 
 		Order order = new Order();
@@ -78,12 +117,21 @@ public class OrderServiceImpl implements OrderService {
 		order.setEmail(email);
 		order.setOrderDate(LocalDate.now());
 
-		order.setTotalAmount(cart.getTotalPrice());
+		order.setTotalAmount(totalAmount);
 		order.setOrderStatus("Order Accepted !");
+
+		Address address = new Address();
+		address.setCountry(country);
+		address.setState(state);
+		address.setCity(city);
+		address.setPincode(pincode);
+		address.setStreet(street);
+		address.setBuildingName(buildingName);
 
 		Payment payment = new Payment();
 		payment.setOrder(order);
 		payment.setPaymentMethod(paymentMethod);
+		payment.setShippingAddress(address);
 
 		payment = paymentRepo.save(payment);
 
@@ -104,8 +152,15 @@ public class OrderServiceImpl implements OrderService {
 
 			orderItem.setProduct(cartItem.getProduct());
 			orderItem.setQuantity(cartItem.getQuantity());
-			orderItem.setDiscount(cartItem.getDiscount());
-			orderItem.setOrderedProductPrice(cartItem.getProductPrice());
+
+			if (isMembershipApplied) {
+				orderItem.setDiscount(discountPercentage); 
+				orderItem.setOrderedProductPrice(cartItem.getProduct().getPrice());
+			} else {
+				orderItem.setDiscount(cartItem.getDiscount()); 
+				orderItem.setOrderedProductPrice(cartItem.getProductPrice());
+			}
+
 			orderItem.setOrder(savedOrder);
 
 			orderItems.add(orderItem);
