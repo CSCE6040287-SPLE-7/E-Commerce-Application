@@ -10,5 +10,8 @@ import lombok.NoArgsConstructor;
 public class PaymentDTO {
 	private Long paymentId;
 	private String paymentMethod;
+	private String bankName;
+	private String accountNumber;
+	private String promocode;
 
 }
