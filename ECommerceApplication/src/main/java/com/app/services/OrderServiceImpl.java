@@ -106,39 +106,11 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String country, String state, String city, String pincode, String street, String buildingName, String membershipCode) {
-
+	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String bankName, String accountNumber, String promocode) {
 		Cart cart = cartRepo.findCartByEmailAndCartId(email, cartId);
 
 		if (cart == null) {
 			throw new ResourceNotFoundException("Cart", "cartId", cartId);
-		}
-		Double totalAmount;
-		Integer discountPercentage = 0;
-
-		boolean isMembershipApplied = membershipCode != null && !membershipCode.trim().isEmpty();
-
-		if (isMembershipApplied) {
-
-			String normalized = membershipCode.trim().toUpperCase();
-
-			if (!membershipCodes.containsKey(normalized)) {
-				throw new APIException("Invalid membership code");
-			}
-
-			discountPercentage = membershipCodes.get(normalized);
-
-			totalAmount = 0.0;
-
-			for (CartItem item : cart.getCartItems()) {
-				double originalPrice = item.getProduct().getPrice();
-				totalAmount += originalPrice * item.getQuantity();
-			}
-
-			totalAmount -= totalAmount * discountPercentage / 100.0;
-
-		} else {
-			totalAmount = cart.getTotalPrice();
 		}
 
 		// Validasi bahwa cart tidak kosong
@@ -199,9 +171,101 @@ public class OrderServiceImpl implements OrderService {
 		order.setTotalAmount(totalAmount);
 		order.setOrderStatus("Order Accepted !");
 
+		Payment payment = new Payment();
+		payment.setOrder(order);
+		payment.setPaymentMethod(paymentMethod);
+		payment.setBankName(normalizedBankName);
+		payment.setAccountNumber(accountNumber);
+		if (promocode != null && !promocode.trim().isEmpty()) {
+			payment.setPromocode(promocode.trim().toUpperCase());
+		}
+
+		payment = paymentRepo.save(payment);
+
+		order.setPayment(payment);
+
+		Order savedOrder = orderRepo.save(order);
+
+		List<OrderItem> orderItems = new ArrayList<>();
+
+		for (CartItem cartItem : cartItems) {
+			OrderItem orderItem = new OrderItem();
+
+			orderItem.setProduct(cartItem.getProduct());
+			orderItem.setQuantity(cartItem.getQuantity());
+			orderItem.setDiscount(cartItem.getDiscount());
+			orderItem.setOrderedProductPrice(cartItem.getProductPrice());
+			orderItem.setOrder(savedOrder);
+
+			orderItems.add(orderItem);
+		}
+
+		orderItems = orderItemRepo.saveAll(orderItems);
+
+		cart.getCartItems().forEach(item -> {
+			int quantity = item.getQuantity();
+
+			Product product = item.getProduct();
+
+			cartService.deleteProductFromCart(cartId, item.getProduct().getProductId());
+
+			product.setQuantity(product.getQuantity() - quantity);
+		});
+
+		OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
+
+		orderItems.forEach(item -> orderDTO.getOrderItems().add(modelMapper.map(item, OrderItemDTO.class)));
+
+		return orderDTO;
+	}
+
+	@Override
+	public OrderDTO placeOrder(String email, Long cartId, String paymentMethod, String country, String state, String city, String pincode, String street, String buildingName, String membershipCode) {
+
+		Cart cart = cartRepo.findCartByEmailAndCartId(email, cartId);
+
+		if (cart == null) {
+			throw new ResourceNotFoundException("Cart", "cartId", cartId);
+		}
+		Double totalAmount;
+		Integer discountPercentage = 0;
+
+		boolean isMembershipApplied = membershipCode != null && !membershipCode.trim().isEmpty();
+
+		if (isMembershipApplied) {
+
+			String normalized = membershipCode.trim().toUpperCase();
+
+			if (!membershipCodes.containsKey(normalized)) {
+				throw new APIException("Invalid membership code");
+			}
+
+			discountPercentage = membershipCodes.get(normalized);
+
+			totalAmount = 0.0;
+
+			for (CartItem item : cart.getCartItems()) {
+				double originalPrice = item.getProduct().getPrice();
+				totalAmount += originalPrice * item.getQuantity();
+			}
+
+			totalAmount -= totalAmount * discountPercentage / 100.0;
+
+		} else {
+			totalAmount = cart.getTotalPrice();
+		}
+
+		Order order = new Order();
+
+		order.setEmail(email);
+		order.setOrderDate(LocalDate.now());
+
+		order.setTotalAmount(totalAmount);
+		order.setOrderStatus("Order Accepted !");
+
 
 		List<Address> addresses = addressRepo.findAllByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(
-			country, state, city, pincode, street, buildingName
+				country, state, city, pincode, street, buildingName
 		);
 
 		Address address;
@@ -222,17 +286,18 @@ public class OrderServiceImpl implements OrderService {
 		payment.setOrder(order);
 		payment.setPaymentMethod(paymentMethod);
 		payment.setShippingAddress(address);
-		payment.setBankName(normalizedBankName);
-		payment.setAccountNumber(accountNumber);
-		if (promocode != null && !promocode.trim().isEmpty()) {
-			payment.setPromocode(promocode.trim().toUpperCase());
-		}
 
 		payment = paymentRepo.save(payment);
 
 		order.setPayment(payment);
 
 		Order savedOrder = orderRepo.save(order);
+
+		List<CartItem> cartItems = cart.getCartItems();
+
+		if (cartItems.size() == 0) {
+			throw new APIException("Cart is empty");
+		}
 
 		List<OrderItem> orderItems = new ArrayList<>();
 
@@ -268,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
 		});
 
 		OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
-		
+
 		orderItems.forEach(item -> orderDTO.getOrderItems().add(modelMapper.map(item, OrderItemDTO.class)));
 
 		return orderDTO;
