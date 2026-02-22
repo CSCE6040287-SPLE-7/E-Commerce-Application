@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.entites.Review;
+import com.app.payloads.CreateReviewDTO;
 import com.app.payloads.ReviewDTO;
 import com.app.services.ReviewService;
 
@@ -31,11 +32,9 @@ public class ReviewController {
     private ReviewService reviewService;
 
     @PostMapping("/public/reviews")
-    public ResponseEntity<ReviewDTO> addReview(
-            @RequestParam String email,
-            @RequestParam Integer rating) {
+    public ResponseEntity<ReviewDTO> addReview(@Valid @RequestBody CreateReviewDTO createReviewDTO) {
 
-        ReviewDTO savedReview = reviewService.addReview(email, rating);
+        ReviewDTO savedReview = reviewService.addReview(createReviewDTO);
         return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
     }
 

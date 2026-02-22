@@ -4,6 +4,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.app.payloads.CreateReviewDTO;
 import com.app.payloads.ReviewDTO;
 import com.app.repositories.ReviewRepo;
 import com.app.entites.Review;
@@ -28,7 +29,10 @@ public class ReviewServiceImpl implements ReviewService {
     private ModelMapper modelMapper;
 
     @Override
-    public ReviewDTO addReview(String email, Integer rating) {
+    public ReviewDTO addReview(CreateReviewDTO createReviewDTO) {
+        String email = createReviewDTO.getEmailUser();
+        Integer rating = createReviewDTO.getRating();
+        
         userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User with email " + email + " not found"));
 
