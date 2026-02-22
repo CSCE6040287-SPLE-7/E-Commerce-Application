@@ -11,4 +11,5 @@ public class ReviewDTO {
     private Long reviewId;
     private String emailUser;
     private Integer rating;
+    private String urlImage;
 }

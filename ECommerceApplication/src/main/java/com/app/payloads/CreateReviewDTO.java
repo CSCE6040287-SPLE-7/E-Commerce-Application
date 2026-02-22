@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class CreateReviewDTO {
     private String emailUser;
     private Integer rating;
+    private String urlImage;
 }

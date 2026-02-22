@@ -1,5 +1,7 @@
 package com.app.entites;
 
+import org.hibernate.validator.constraints.URL;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,4 +30,7 @@ public class Review {
     @Min(value = 1, message = "Rating minimal 1")
     @Max(value = 10, message = "Rating maksimal 10")
     private Integer rating;
+
+    @URL
+    private String urlImage;
 }

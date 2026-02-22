@@ -32,7 +32,8 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDTO addReview(CreateReviewDTO createReviewDTO) {
         String email = createReviewDTO.getEmailUser();
         Integer rating = createReviewDTO.getRating();
-        
+        String urlImage = createReviewDTO.getUrlImage();
+
         userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User with email " + email + " not found"));
 
@@ -44,6 +45,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = new Review();
         review.setEmailUser(email);
         review.setRating(rating);
+        review.setUrlImage(urlImage);
 
         Review savedReview = reviewRepo.save(review);
         return modelMapper.map(savedReview, ReviewDTO.class);
@@ -78,6 +80,10 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (updatedReview.getRating() != null) {
             existingReview.setRating(updatedReview.getRating());
+        }
+
+        if (updatedReview.getUrlImage() != null) {
+            existingReview.setUrlImage(updatedReview.getUrlImage());
         }
 
         Review savedReview = reviewRepo.save(existingReview);
