@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,4 +29,7 @@ public class Review {
     @Min(value = 1, message = "Rating minimal 1")
     @Max(value = 10, message = "Rating maksimal 10")
     private Integer rating;
+
+    @Size(max = 500, message = "Komentar maksimal 500 karakter")
+    private String comment;
 }
