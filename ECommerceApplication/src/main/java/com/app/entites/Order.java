@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -45,4 +46,12 @@ public class Order {
 	
 	private Double totalAmount;
 	private String orderStatus;
+	
+	private String shippingMethod;
+	
+	@ManyToOne
+	@JoinColumn(name = "pickup_location_id")
+	private PickupLocation pickupLocation;
+	
+	private String pickupCode;
 }

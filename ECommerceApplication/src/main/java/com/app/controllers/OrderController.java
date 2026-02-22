@@ -3,11 +3,13 @@ package com.app.controllers;
 import com.app.config.AppConstants;
 import com.app.payloads.OrderDTO;
 import com.app.payloads.OrderResponse;
+import com.app.payloads.PlaceOrderRequestDTO;
 import com.app.services.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,29 +49,27 @@ public class OrderController {
 
 	@Operation(
 		summary = "Place Order with Bank Transfer",
-		description = "Create a new order using bank transfer payment method. Requires valid bank name and account number."
+		description = "Create a new order using bank transfer payment method. Supports delivery with address or pickup with pickup location."
 	)
 	@PostMapping("/public/users/{email}/carts/{cartId}/payments/bankTransfer/order")
 	public ResponseEntity<OrderDTO> orderProducts(
 			@Parameter(description = "User email address") @PathVariable String email,
 			@Parameter(description = "Cart ID") @PathVariable Long cartId,
-			@Parameter(description = "Bank name (e.g., bca, bri, mandiri, bni, jago)", required = true) @RequestParam String bankName,
-			@Parameter(description = "Bank account number", required = true) @RequestParam String accountNumber,
-			@Parameter(description = "Promo code for discount (optional)") @RequestParam(required = false) String promocode) {
-		OrderDTO order = orderService.placeOrder(email, cartId, "bankTransfer", bankName, accountNumber, promocode);
+			@Valid @RequestBody PlaceOrderRequestDTO request) {
+		request.setPaymentMethod("bankTransfer");
+		OrderDTO order = orderService.placeOrder(email, cartId, request);
 
 		return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
     }
+	
 	@PostMapping("/public/users/{email}/carts/{cartId}/payments/{paymentMethod}/order")
-	public ResponseEntity<OrderDTO> orderProducts(@PathVariable String email, @PathVariable Long cartId, @PathVariable String paymentMethod,
-		@RequestParam(required = false) String country,
-        @RequestParam(required = false) String state,
-        @RequestParam(required = false) String city,
-        @RequestParam(required = false) String pincode,
-		@RequestParam(required = false) String street,
-		@RequestParam(required = false) String buildingName,
-		@RequestParam(required = false) String membershipCode) {
-		OrderDTO order = orderService.placeOrder(email, cartId, paymentMethod, country, state, city, pincode, street, buildingName, membershipCode);
+	public ResponseEntity<OrderDTO> orderProducts(
+			@PathVariable String email, 
+			@PathVariable Long cartId, 
+			@PathVariable String paymentMethod,
+			@Valid @RequestBody PlaceOrderRequestDTO request) {
+		request.setPaymentMethod(paymentMethod);
+		OrderDTO order = orderService.placeOrder(email, cartId, request);
 
 		return new ResponseEntity<OrderDTO>(order, HttpStatus.CREATED);
 	}

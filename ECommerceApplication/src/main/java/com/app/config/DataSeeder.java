@@ -21,6 +21,7 @@ import com.app.entites.Category;
 import com.app.entites.Order;
 import com.app.entites.OrderItem;
 import com.app.entites.Payment;
+import com.app.entites.PickupLocation;
 import com.app.entites.Product;
 import com.app.entites.Role;
 import com.app.entites.User;
@@ -31,6 +32,7 @@ import com.app.repositories.CategoryRepo;
 import com.app.repositories.OrderItemRepo;
 import com.app.repositories.OrderRepo;
 import com.app.repositories.PaymentRepo;
+import com.app.repositories.PickupLocationRepo;
 import com.app.repositories.ProductRepo;
 import com.app.repositories.RoleRepo;
 import com.app.repositories.UserRepo;
@@ -57,6 +59,9 @@ public class DataSeeder implements CommandLineRunner {
 
 	@Autowired
 	private AddressRepo addressRepo;
+
+	@Autowired
+	private PickupLocationRepo pickupLocationRepo;
 
 	@Autowired
 	private CartRepo cartRepo;
@@ -98,39 +103,43 @@ public class DataSeeder implements CommandLineRunner {
 		}
 		log.info("Found {} existing roles", roles.size());
 
-		// 2. Seed Categories
+		// 2. Seed Pickup Locations
+		List<PickupLocation> pickupLocations = seedPickupLocations();
+		log.info("Seeded {} pickup locations", pickupLocations.size());
+
+		// 3. Seed Categories
 		List<Category> categories = seedCategories();
 		log.info("Seeded {} categories", categories.size());
 
-		// 3. Seed Addresses
+		// 4. Seed Addresses
 		List<Address> addresses = seedAddresses(20);
 		log.info("Seeded {} addresses", addresses.size());
 
-		// 4. Seed Users with Roles and Addresses
+		// 5. Seed Users with Roles and Addresses
 		List<User> users = seedUsers(15, roles, addresses);
 		log.info("Seeded {} users", users.size());
 
-		// 5. Seed Carts for Users
+		// 6. Seed Carts for Users
 		List<Cart> carts = seedCarts(users);
 		log.info("Seeded {} carts", carts.size());
 
-		// 6. Seed Products
+		// 7. Seed Products
 		List<Product> products = seedProducts(50, categories);
 		log.info("Seeded {} products", products.size());
 
-		// 7. Seed Cart Items
+		// 8. Seed Cart Items
 		List<CartItem> cartItems = seedCartItems(carts, products);
 		log.info("Seeded {} cart items", cartItems.size());
 
-		// 8. Seed Payments
+		// 9. Seed Payments
 		List<Payment> payments = seedPayments(15);
 		log.info("Seeded {} payments", payments.size());
 
-		// 9. Seed Orders
+		// 10. Seed Orders
 		List<Order> orders = seedOrders(15, payments, users);
 		log.info("Seeded {} orders", orders.size());
 
-		// 10. Seed Order Items
+		// 11. Seed Order Items
 		List<OrderItem> orderItems = seedOrderItems(orders, products);
 		log.info("Seeded {} order items", orderItems.size());
 
@@ -157,6 +166,47 @@ public class DataSeeder implements CommandLineRunner {
 		}
 
 		return categoryRepo.saveAll(categories);
+	}
+
+	private List<PickupLocation> seedPickupLocations() {
+		List<PickupLocation> pickupLocations = new ArrayList<>();
+		
+		// Jakarta Central
+		PickupLocation jakarta = new PickupLocation();
+		jakarta.setName("Jakarta Central");
+		jakarta.setCode("JA-RAL");
+		jakarta.setAddress("Plaza Indonesia, Jl. M.H. Thamrin No.28-30, Jakarta Pusat, DKI Jakarta 10350");
+		pickupLocations.add(jakarta);
+		
+		// Surabaya Mall
+		PickupLocation surabaya = new PickupLocation();
+		surabaya.setName("Surabaya Mall");
+		surabaya.setCode("SU-ALL");
+		surabaya.setAddress("Tunjungan Plaza 1, Jl. Basuki Rahmat No.8-12, Surabaya, Jawa Timur 60261");
+		pickupLocations.add(surabaya);
+		
+		// Bandung Point
+		PickupLocation bandung = new PickupLocation();
+		bandung.setName("Bandung Point");
+		bandung.setCode("BA-INT");
+		bandung.setAddress("Paris Van Java Mall, Jl. Sukajadi No.137-139, Bandung, Jawa Barat 40162");
+		pickupLocations.add(bandung);
+		
+		// Medan Plaza
+		PickupLocation medan = new PickupLocation();
+		medan.setName("Medan Plaza");
+		medan.setCode("ME-ZA");
+		medan.setAddress("Sun Plaza, Jl. KH. Zainul Arifin No.7, Medan, Sumatera Utara 20152");
+		pickupLocations.add(medan);
+		
+		// Yogyakarta Hub
+		PickupLocation yogyakarta = new PickupLocation();
+		yogyakarta.setName("Yogyakarta Hub");
+		yogyakarta.setCode("YO-HUB");
+		yogyakarta.setAddress("Malioboro Mall, Jl. Malioboro No.52-58, Yogyakarta, DI Yogyakarta 55213");
+		pickupLocations.add(yogyakarta);
+		
+		return pickupLocationRepo.saveAll(pickupLocations);
 	}
 
 	private List<Address> seedAddresses(int count) {
