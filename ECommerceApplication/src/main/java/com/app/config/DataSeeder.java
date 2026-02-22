@@ -1,6 +1,5 @@
 package com.app.config;
 
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,6 +17,7 @@ import com.app.entites.Address;
 import com.app.entites.Cart;
 import com.app.entites.CartItem;
 import com.app.entites.Category;
+import com.app.entites.DeliveryService;
 import com.app.entites.Order;
 import com.app.entites.OrderItem;
 import com.app.entites.Payment;
@@ -28,6 +28,7 @@ import com.app.repositories.AddressRepo;
 import com.app.repositories.CartItemRepo;
 import com.app.repositories.CartRepo;
 import com.app.repositories.CategoryRepo;
+import com.app.repositories.DeliveryServiceRepo;
 import com.app.repositories.OrderItemRepo;
 import com.app.repositories.OrderRepo;
 import com.app.repositories.PaymentRepo;
@@ -74,6 +75,9 @@ public class DataSeeder implements CommandLineRunner {
 	private OrderItemRepo orderItemRepo;
 
 	@Autowired
+	private DeliveryServiceRepo deliveryServiceRepo;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	private final Faker faker = new Faker();
@@ -102,35 +106,39 @@ public class DataSeeder implements CommandLineRunner {
 		List<Category> categories = seedCategories();
 		log.info("Seeded {} categories", categories.size());
 
-		// 3. Seed Addresses
+		// 3. Seed Delivery Services
+		List<DeliveryService> deliveryServices = seedDeliveryServices();
+		log.info("Seeded {} delivery services", deliveryServices.size());
+
+		// 4. Seed Addresses
 		List<Address> addresses = seedAddresses(20);
 		log.info("Seeded {} addresses", addresses.size());
 
-		// 4. Seed Users with Roles and Addresses
+		// 5. Seed Users with Roles and Addresses
 		List<User> users = seedUsers(15, roles, addresses);
 		log.info("Seeded {} users", users.size());
 
-		// 5. Seed Carts for Users
+		// 6. Seed Carts for Users
 		List<Cart> carts = seedCarts(users);
 		log.info("Seeded {} carts", carts.size());
 
-		// 6. Seed Products
+		// 7. Seed Products
 		List<Product> products = seedProducts(50, categories);
 		log.info("Seeded {} products", products.size());
 
-		// 7. Seed Cart Items
+		// 8. Seed Cart Items
 		List<CartItem> cartItems = seedCartItems(carts, products);
 		log.info("Seeded {} cart items", cartItems.size());
 
-		// 8. Seed Payments
+		// 9. Seed Payments
 		List<Payment> payments = seedPayments(15);
 		log.info("Seeded {} payments", payments.size());
 
-		// 9. Seed Orders
+		// 10. Seed Orders
 		List<Order> orders = seedOrders(15, payments, users);
 		log.info("Seeded {} orders", orders.size());
 
-		// 10. Seed Order Items
+		// 11. Seed Order Items
 		List<OrderItem> orderItems = seedOrderItems(orders, products);
 		log.info("Seeded {} order items", orderItems.size());
 
@@ -157,6 +165,45 @@ public class DataSeeder implements CommandLineRunner {
 		}
 
 		return categoryRepo.saveAll(categories);
+	}
+
+	private List<DeliveryService> seedDeliveryServices() {
+		List<DeliveryService> deliveryServices = new ArrayList<>();
+		
+		// Create 5 delivery services with varying costs and delivery times
+		// Rule: Higher cost percentage = Lower delivery days
+		
+		DeliveryService express = new DeliveryService();
+		express.setServiceName("Express Delivery");
+		express.setDeliveryCostPercentage(7); // Highest cost
+		express.setEstimatedDeliveryDays(1); // Fastest delivery
+		deliveryServices.add(express);
+		
+		DeliveryService fast = new DeliveryService();
+		fast.setServiceName("Fast Delivery");
+		fast.setDeliveryCostPercentage(6);
+		fast.setEstimatedDeliveryDays(3);
+		deliveryServices.add(fast);
+		
+		DeliveryService standard = new DeliveryService();
+		standard.setServiceName("Standard Delivery");
+		standard.setDeliveryCostPercentage(5);
+		standard.setEstimatedDeliveryDays(7);
+		deliveryServices.add(standard);
+		
+		DeliveryService economy = new DeliveryService();
+		economy.setServiceName("Economy Delivery");
+		economy.setDeliveryCostPercentage(4);
+		economy.setEstimatedDeliveryDays(10);
+		deliveryServices.add(economy);
+		
+		DeliveryService budget = new DeliveryService();
+		budget.setServiceName("Budget Delivery");
+		budget.setDeliveryCostPercentage(3); // Lowest cost
+		budget.setEstimatedDeliveryDays(14); // Slowest delivery
+		deliveryServices.add(budget);
+		
+		return deliveryServiceRepo.saveAll(deliveryServices);
 	}
 
 	private List<Address> seedAddresses(int count) {

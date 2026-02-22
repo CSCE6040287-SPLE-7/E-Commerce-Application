@@ -18,6 +18,14 @@ public class OrderDTO {
 	private List<OrderItemDTO> orderItems = new ArrayList<>();
 	private LocalDate orderDate;
 	private PaymentDTO payment;
+	private DeliveryServiceDTO deliveryService;
+	private String shippingMethod;
+	private String country;
+	private String state;
+	private String city;
+	private String pincode;
+	private String street;
+	private String buildingName;
 	private Double totalAmount;
 	private String orderStatus;
 

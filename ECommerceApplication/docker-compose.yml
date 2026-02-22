@@ -10,14 +10,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
     ports:
       - "15002:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - ecommerce-network
     restart: unless-stopped
-
-volumes:
-  postgres_data:
 
 networks:
   ecommerce-network:
